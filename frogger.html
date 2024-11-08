@@ -46,6 +46,11 @@
 
         const clock = new THREE.Clock();
 
+        const flySpots = [-7, -5, -3, -1, 1, 3, 5, 7];
+        let flySpawned = false;
+        let flySpawnTime = 0;
+        const flyDuration = 6;
+
         
         const camera = new THREE.PerspectiveCamera(
             75, window.innerWidth / window.innerHeight, 0.1, 1000
@@ -102,21 +107,7 @@
             }
         );
 
-        loader.load(
-            './models/fly.gltf',
-            function(gltf) {
-                fly = gltf.scene;
-                initializeFly();
-            },
-            undefined,
-            function ( error ){
-                console.error('An error occured while loading the Fly model:', error)
-            }
-        )
-
-        let flySpawned = false;
-        let flySpawnTime = 0;
-        const flyDuration = 5;
+        
 
         function loadCar() {
             loader.load(
@@ -360,6 +351,19 @@
             }
         );
     }
+    function loadFly() {
+        loader.load(
+            './models/fly.gltf',
+            function (gltf) {
+                fly = gltf.scene;
+                initializeFly();
+            },
+            undefined,
+            function (error) {
+                console.error('An error occurred while loading the fly model:', error);
+            }
+        );
+    }
 
 
         function initializePlayer() {
@@ -397,17 +401,10 @@
         }
 
         function initializeFly() {
-            fly.scale.set(0.1,0.1,0.1);
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+            fly = new THREE.Mesh(geometry, material);
             fly.visible = false;
-            const flyDuration = 5;
-            fly.traverse(function (child) {
-                if (child.isMesh) {
-                    child.castShadow = false;
-                    child.material = new THREE.MeshStandardMaterial({color:0x000000});
-                }
-
-            });
-
             scene.add(fly);
         }
 
@@ -469,6 +466,7 @@
         loadBus();
         loadTurtle();
         loadSkull();
+        loadFly();
       
 
         function initializeLog(){
@@ -510,10 +508,25 @@
 
             updateMovement(deltaTime);
 
-            updateMovement();
-
            
             checkCollisions();
+            if(fly){
+                if(!flySpawned && clock.getElapsedTime() - flySpawnTime > flyDuration){
+                spawnFly(fly);
+                flySpawned = true;
+                console.log('Fly spawned');
+                flySpawnTime = clock.getElapsedTime();
+            }
+            if(flySpawned && clock.getElapsedTime() - flySpawnTime > flyDuration){
+                fly.visible = false;
+                flySpawned = false;
+                console.log('Fly despawned');
+                flySpawnTime = clock.getElapsedTime();
+            }
+           if (fly.visible){
+            updateFly(deltaTime, fly, player);
+
+        }
            
             if (player) {
                 player.userData.boundingBox.setFromObject(player);
@@ -624,7 +637,29 @@
 
             moveWithPlatform();
 
+           
+
+           
+           }
+
             renderer.render(scene, camera);
+        }
+
+        function spawnFly(fly){
+            const randomIndex = Math.floor(Math.random() * flySpots.length);
+            const randomX = flySpots[randomIndex];
+            const playerZ = player ? player.position.z : 8; // Default to 8 if player is undefined
+            const flyZ = -5;
+            fly.position.set(randomX, 0.5, flyZ);
+            fly.visible = true;
+        }
+
+        function updateFly(deltaTime, fly, player){
+           const hoverHeight = 0.2;
+           const hoverSpeed = 2;
+           fly.position.y = 0.5 + Math.sin(clock.getElapsedTime() * hoverSpeed) * hoverHeight;
+
+           fly.rotation.y += deltaTime;
         }
 
         function checkCollisions() {
@@ -894,7 +929,7 @@ scene.add(light);
         function initializeRedCubes() {
             const cubeSpots = [-8, -6, -4, -2, 0, 2, 4, 6, 8];
             cubeSpots.forEach((xPosition, index) => {
-                if (index % 2 === 0) {
+         
                     const geometry = new THREE.BoxGeometry(1, 1, 1);
                     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
                     const cube = new THREE.Mesh(geometry, material);
@@ -904,7 +939,7 @@ scene.add(light);
 
                     scene.add(cube);
                     snakes.push(cube); 
-                }
+                
             });
         }
 
