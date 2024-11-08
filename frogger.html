@@ -23,8 +23,7 @@
     </script>
     <script type="module">
         import * as THREE from 'three';
-        import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-        import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+        import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
         
         const scene = new THREE.Scene();
@@ -56,6 +55,7 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setClearColor(0xffffff);
         document.body.appendChild(renderer.domElement);
@@ -67,7 +67,7 @@
         let log;
         let bus;
         let turtle;
-        let fly; // Add this line
+        let fly;
 
         const cars = [];
         const blueCars = [];
@@ -75,77 +75,56 @@
         const logs = [];
         const turtles = [];
 
-        const playerLoader = new OBJLoader();
-        const carLoader = new OBJLoader();
-        const logLoader = new OBJLoader();
-        const blueCarLoader = new OBJLoader();
-        const busLoader = new OBJLoader();
-        const turtleLoader = new OBJLoader();
-        const skullLoader = new OBJLoader();
-        const flyLoader = new OBJLoader();
+        const loader = new GLTFLoader();
 
-
-
-        const carMtlLoader = new MTLLoader();
-        // const logMtlLoader = new MTLLoader();
-        const blueCarMtlLoader = new MTLLoader();
-        const busMtlLoader = new MTLLoader();
-        // const turtleMtlLoader = new MTLLoader();
-
-
-
-      
-        playerLoader.load(
-            './frog.obj',
-            function (object) {
-                player = object;
+        loader.load(
+            './models/frog.gltf',
+            function (gltf) {
+                player = gltf.scene;
                 initializePlayer();
             },
             undefined,
             function (error) {
-                console.error('An error occurred while loading the OBJ model:', error);
+                console.error('An error occurred while loading the frog model:', error);
             }
         );
 
-        skullLoader.load(
-            './skull.obj',
-            function (object) {
-                skull = object;
+        loader.load(
+            './models/skull.gltf',
+            function (gltf) {
+                skull = gltf.scene;
                 initializeSkull();
             },
             undefined,
             function (error) {
-                console.error('An error occurred while loading the Skull OBJ model:', error);
+                console.error('An error occurred while loading the Skull model:', error);
             }
         );
 
-        flyLoader.load(
-            './fly.obj',
-            function(object) {
-                fly = object; // Use a semicolon instead of a comma
+        loader.load(
+            './models/fly.gltf',
+            function(gltf) {
+                fly = gltf.scene;
                 initializeFly();
             },
             undefined,
             function ( error ){
-                console.error('An error occured while loading the Fly OBJ model:', error)
+                console.error('An error occured while loading the Fly model:', error)
             }
         )
 
         function loadCar() {
-            carMtlLoader.load('./car.mtl', function (materials) {
-                materials.preload();
-                carLoader.setMaterials(materials);
-                carLoader.load(
-                    './Car.obj',
-                    function (object) {
-                        initializeCars(object);
-                    },
-                    undefined,
-                    function (error) {
-                        console.error('car error load', error);
-                    }
-                );
-            });
+            loader.load(
+                './models/car.gltf',
+                function (gltf) {
+                    const carModel = gltf.scene;
+                    initializeCars(carModel);
+                },
+                undefined,
+                function (error) {
+                    console.error('An error occurred while loading the car model:', error);
+                }
+            );
         }
 
         function initializeCars(model) {
@@ -154,6 +133,8 @@
                 const zPosition = i < 4 ? 6 : 4; 
                 const xPosition = -9 + (i % 3) * 8; 
 
+                carClone.userData.boundingBox = new THREE.Box3().setFromObject(carClone);
+
                 carClone.position.set(xPosition, 0, zPosition);
                 carClone.scale.set(0.5, 0.4, 0.4);
                 carClone.userData.speed = 0.05;
@@ -161,7 +142,6 @@
                 carClone.traverse(function (child) {
                     if (child.isMesh) {
                         child.castShadow = true;
-                        child.receiveShadow = true;
                         child.material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
                     }
                 });
@@ -172,20 +152,17 @@
         }
 
         function loadBlueCar() {
-            blueCarMtlLoader.load('./blueCar.mtl', function (materials) {
-                materials.preload();
-                blueCarLoader.setMaterials(materials);
-                blueCarLoader.load(
-                    './blueCar.obj',
-                    function (object) {
-                        initializeBlueCars(object);
-                    },
-                    undefined,
-                    function (error) {
-                        console.error('blueCar error load', error);
-                    }
-                );
-            });
+            loader.load(
+                './models/blueCar.gltf',
+                function (gltf) {
+                    const blueCarModel = gltf.scene;
+                    initializeBlueCars(blueCarModel);
+                },
+                undefined,
+                function (error) {
+                    console.error('An error occurred while loading the blue car model:', error);
+                }
+            );
         }
 
         function initializeBlueCars(model) {
@@ -193,6 +170,8 @@
                 const blueCarClone = model.clone();
                 const zPosition = i < 4 ? 5 : 3; 
                 const xPosition = 8 - (i % 4) * 6; 
+
+                blueCarClone.userData.boundingBox = new THREE.Box3().setFromObject(blueCarClone);
 
                 blueCarClone.position.set(xPosition, 0, zPosition);
                 blueCarClone.scale.set(0.3, 0.4, 0.3);
@@ -202,7 +181,6 @@
                 blueCarClone.traverse(function (child) {
                     if (child.isMesh) {
                         child.castShadow = true;
-                        child.receiveShadow = true;
                         child.material = new THREE.MeshStandardMaterial({ color: 0x0022ff });
                     }
                 });
@@ -213,20 +191,17 @@
         }
 
         function loadBus() {
-            busMtlLoader.load('./bus.mtl', function (materials) {
-                materials.preload();
-                busLoader.setMaterials(materials);
-                busLoader.load(
-                    './bus.obj',
-                    function (object) {
-                        initializeBuses(object);
-                    },
-                    undefined,
-                    function (error) {
-                        console.error('bus error load', error);
-                    }
-                );
-            });
+            loader.load(
+                './models/bus.gltf',
+                function (gltf) {
+                    const busModel = gltf.scene;
+                    initializeBuses(busModel);
+                },
+                undefined,
+                function (error) {
+                    console.error('An error occurred while loading the bus model:', error);
+                }
+            );
         }
 
         function initializeBuses(model) {
@@ -235,6 +210,8 @@
                 const zPosition = 2;
                 const xPosition = -8 + i * 8;
 
+                busClone.userData.boundingBox = new THREE.Box3().setFromObject(busClone);
+
                 busClone.position.set(xPosition, 0, zPosition);
                 busClone.scale.set(0.03, 0.04, 0.03);
                 busClone.userData.speed = -0.05;
@@ -242,7 +219,6 @@
                 busClone.traverse(function (child) {
                     if (child.isMesh) {
                         child.castShadow = true;
-                        child.receiveShadow = true;
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffff00 });
                     }
                 });
@@ -253,14 +229,15 @@
         }
 
         function loadLog() {
-            logLoader.load(
-                './log.obj',
-                function (object) {
-                    initializeLogs(object);
+            loader.load(
+                './models/log.gltf',
+                function (gltf) {
+                    const logModel = gltf.scene;
+                    initializeLogs(logModel);
                 },
                 undefined,
                 function (error) {
-                    console.error('log error load', error);
+                    console.error('An error occurred while loading the log model:', error);
                 }
             );
         }
@@ -290,9 +267,6 @@
 
                     logClone.traverse(function (child) {
                         if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                            // Set oak brown material
                             child.material = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
                         }
                     });
@@ -307,14 +281,15 @@
         }
 
         function loadTurtle() {
-            turtleLoader.load(
-                './turtle.obj',
-                function (object) {
-                    initializeTurtles(object);
+            loader.load(
+                './models/turtle.gltf',
+                function (gltf) {
+                    const turtleModel = gltf.scene;
+                    initializeTurtles(turtleModel);
                 },
                 undefined,
                 function (error) {
-                    console.error('turtle error load', error);
+                    console.error('An error occurred while loading the turtle model:', error);
                 }
             );
         }
@@ -344,9 +319,6 @@
 
                     turtleClone.traverse(function (child) {
                         if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                            // Set dark green material
                             child.material = new THREE.MeshStandardMaterial({ color: 0x006400 });
                         }
                     });
@@ -364,10 +336,10 @@
         }
 
         function loadSkull() {
-        skullLoader.load(
-            './skull.obj',
-            function (object) {
-                skull = object;
+        loader.load(
+            './models/skull.gltf',
+            function (gltf) {
+                skull = gltf.scene;
                 initializeSkull();
             },
             undefined,
@@ -381,12 +353,14 @@
         function initializePlayer() {
             player.position.set(0, 0.1, 8);
             player.scale.set(0.01, 0.01, 0.01);
+
+            player.userData.boundingBox = new THREE.Box3();
            
 
             player.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.receiveShadow = true;
+                    child.receiveShadow = false;
                     child.material.color.set(0x00ff00);
                 }
             });
@@ -402,7 +376,6 @@
             skull.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.receiveShadow = true;
                     child.material = new THREE.MeshStandardMaterial({ color: 0xffffff }); 
                 }
             });
@@ -435,7 +408,6 @@
             car.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.receiveShadow = true;
                     child.material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); 
                 }
             });
@@ -454,7 +426,6 @@
             blueCar.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.receiveShadow = true;
                     child.material = new THREE.MeshStandardMaterial({ color: 0x0022ff }); 
 
                 }
@@ -472,7 +443,6 @@
             bus.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.receiveShadow = true;
                     child.material = new THREE.MeshStandardMaterial({ color: 0xffff00 }); 
                 }
             });
@@ -495,8 +465,6 @@
 
             log.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
                     child.material.color.set(0x8B4513);
                 }
             });
@@ -512,10 +480,7 @@
             turtle.userData.speed = +0.05;
 
             turtle.traverse(function (child) {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                }
+               
             });
 
             scene.add(turtle);
@@ -537,6 +502,7 @@
             checkCollisions();
 
             if (player) {
+                player.userData.boundingBox.setFromObject(player);
                 if (isMoving) {
                 const elapsedTime = clock.getElapsedTime() - moveStartTime;
                     moveProgress = elapsedTime / moveDuration;
@@ -579,6 +545,7 @@
                 if (car.position.x > 8) {
                     car.position.x = -8;
                 }
+                car.userData.boundingBox.setFromObject(car);
             });
 
             blueCars.forEach((blueCar) => {
@@ -586,6 +553,7 @@
                 if (blueCar.position.x < -8) {
                     blueCar.position.x = 8;
                 }
+                blueCar.userData.boundingBox.setFromObject(blueCar);
             });
 
             buses.forEach((bus) => {
@@ -593,6 +561,7 @@
                 if (bus.position.x < -8) {
                     bus.position.x = 8;
                 }
+                bus.userData.boundingBox.setFromObject(bus)
             });
 
             logs.forEach((logGroup) => {
@@ -647,6 +616,8 @@
         function checkCollisions() {
             if (!player) return;
 
+            player.userData.boundingBox.setFromObject(player);
+
             const playerBox = new THREE.Box3().setFromObject(player);
 
             if (isMoving && moveProgress < 1) {
@@ -654,22 +625,19 @@
             }
 
             cars.forEach((car) => {
-                const carBox = new THREE.Box3().setFromObject(car);
-                if (playerBox.intersectsBox(carBox)) {
+                if(player.userData.boundingBox.intersectsBox(car.userData.boundingBox)){
                     handleCollision();
                 }
             });
 
             blueCars.forEach((blueCar) => {
-                const blueCarBox = new THREE.Box3().setFromObject(blueCar);
-                if (playerBox.intersectsBox(blueCarBox)) {
+                if(player.userData.boundingBox.intersectsBox(blueCar.userData.boundingBox)){
                     handleCollision();
                 }
             });
 
             buses.forEach((bus) => {
-                const busBox = new THREE.Box3().setFromObject(bus);
-                if (playerBox.intersectsBox(busBox)) {
+                if(player.userData.boundingBox.intersectsBox(bus.userData.boundingBox)){
                     handleCollision();
                 }
             });
@@ -888,6 +856,8 @@ scene.add(ambientLight);
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(-4, 12, 5);
 light.castShadow = true;
+light.shadow.mapSize.width = 1024;
+light.shadow.mapSize.height = 1024;
 scene.add(light);
 
         animate();
