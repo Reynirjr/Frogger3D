@@ -408,7 +408,7 @@
 
             });
 
-            scewwne.add(fly);
+            scene.add(fly);
         }
 
 
@@ -899,11 +899,11 @@ scene.add(light);
                     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
                     const cube = new THREE.Mesh(geometry, material);
 
-                    cube.position.set(xPosition, 0.5, -5); // Adjust y position to 0.5 to place on the ground
+                    cube.position.set(xPosition, 0.5, -5);
                     cube.userData.boundingBox = new THREE.Box3().setFromObject(cube);
 
                     scene.add(cube);
-                    snakes.push(cube); // Reusing the snakes array to store the cubes
+                    snakes.push(cube); 
                 }
             });
         }
