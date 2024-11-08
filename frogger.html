@@ -126,28 +126,34 @@
                 }
             );
         }
-
         function initializeCars(model) {
-            for (let i = 0; i < 8; i++) {
-                const carClone = model.clone();
-                const zPosition = i < 4 ? 6 : 4; 
-                const xPosition = -9 + (i % 3) * 8; 
+            const lanePositions = [6, 4];
+            const numCarsPerLane = 4; 
+            const laneSpeeds = [0.05, 0.05];
 
-                carClone.userData.boundingBox = new THREE.Box3().setFromObject(carClone);
+            for (let laneIndex = 0; laneIndex < lanePositions.length; laneIndex++) {
+                const zPosition = lanePositions[laneIndex];
+                const speed = laneSpeeds[laneIndex];
+                for (let i = 0; i < numCarsPerLane; i++) {
+                    const carClone = model.clone();
+                    const xPosition = -12 + i * 8; 
 
-                carClone.position.set(xPosition, 0, zPosition);
-                carClone.scale.set(0.5, 0.4, 0.4);
-                carClone.userData.speed = 0.05;
+                    carClone.position.set(xPosition, 0, zPosition);
+                    carClone.scale.set(0.5, 0.4, 0.4);
+                    carClone.userData.speed = speed;
 
-                carClone.traverse(function (child) {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-                    }
-                });
+                    carClone.userData.boundingBox = new THREE.Box3().setFromObject(carClone);
 
-                scene.add(carClone);
-                cars.push(carClone);
+                    carClone.traverse(function (child) {
+                        if (child.isMesh) {
+                            child.castShadow = false;
+                            child.material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+                        }
+                    });
+
+                    scene.add(carClone);
+                    cars.push(carClone);
+                }
             }
         }
 
@@ -180,7 +186,7 @@
 
                 blueCarClone.traverse(function (child) {
                     if (child.isMesh) {
-                        child.castShadow = true;
+                        child.castShadow = false;
                         child.material = new THREE.MeshStandardMaterial({ color: 0x0022ff });
                     }
                 });
@@ -218,7 +224,7 @@
 
                 busClone.traverse(function (child) {
                     if (child.isMesh) {
-                        child.castShadow = true;
+                        child.castShadow = false;
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffff00 });
                     }
                 });
@@ -359,7 +365,7 @@
 
             player.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
+                    child.castShadow = false;
                     child.receiveShadow = false;
                     child.material.color.set(0x00ff00);
                 }
@@ -375,7 +381,7 @@
 
             skull.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
+                    child.castShadow = false;
                     child.material = new THREE.MeshStandardMaterial({ color: 0xffffff }); 
                 }
             });
@@ -390,7 +396,7 @@
 
             fly.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
+                    child.castShadow = false;
                     child.material = new THREE.MeshStandardMaterial({color:0x000000});
                 }
 
@@ -407,7 +413,7 @@
 
             car.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
+                    child.castShadow = false;
                     child.material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); 
                 }
             });
@@ -425,7 +431,7 @@
 
             blueCar.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
+                    child.castShadow = false;
                     child.material = new THREE.MeshStandardMaterial({ color: 0x0022ff }); 
 
                 }
@@ -442,7 +448,7 @@
 
             bus.traverse(function (child) {
                 if (child.isMesh) {
-                    child.castShadow = true;
+                    child.castShadow = false;
                     child.material = new THREE.MeshStandardMaterial({ color: 0xffff00 }); 
                 }
             });
@@ -825,7 +831,7 @@
 
 
 
-const grassPositions = [8, -8]; 
+const grassPositions = [8, -5,-6,-7,-8]; 
 const roadPositions = [2, 3, 4, 5, 6]; 
 const waterPositions = [-1, -2, -3, -4]; 
 
@@ -855,7 +861,7 @@ scene.add(ambientLight);
 
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(-4, 12, 5);
-light.castShadow = true;
+light.castShadow = false;
 light.shadow.mapSize.width = 1024;
 light.shadow.mapSize.height = 1024;
 scene.add(light);
