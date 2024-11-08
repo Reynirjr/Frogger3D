@@ -34,6 +34,7 @@
 
         const keysPressed = {};
         const keysHandled = {};
+        let afram = 0;
 
         let cameraRotationX = 0; 
         let cameraRotationY = 1.55; 
@@ -116,6 +117,26 @@
         const blueCarMtlLoader = new MTLLoader();
         const busMtlLoader = new MTLLoader();
         const turtleMtlLoader = new MTLLoader();
+
+        let points = 0;
+        let highScore = 0;
+
+        const pointsDisplay = document.createElement('div');
+        pointsDisplay.style.position = 'absolute';
+        pointsDisplay.style.top = '10px';
+        pointsDisplay.style.left = '10px';
+        pointsDisplay.style.color = 'black';
+        pointsDisplay.style.fontSize = '20px';
+        pointsDisplay.style.backgroundColor = 'white';
+        pointsDisplay.style.padding = '5px';
+        pointsDisplay.style.zIndex = 100;
+        document.body.appendChild(pointsDisplay);
+
+        function updatePointsDisplay() {
+            pointsDisplay.innerHTML = `Points: ${points} | High Score: ${highScore}`;
+        }
+
+        updatePointsDisplay();
 
 
       
@@ -532,6 +553,7 @@
             updateMovement(deltaTime);
 
             updateMovement();
+            checkGoal(); 
 
            
             checkCollisions();
@@ -744,12 +766,17 @@
             skull.position.set(collisionPoint.x, collisionPoint.y + 1, collisionPoint.z);
             skull.visible = true;
             skull.userData.isSpinning = true;
-            playSound('collision');
+            playSound('collision');    
 
             setTimeout(() => {
                 skull.visible = false;
                 skull.userData.isSpinning = false;
             }, 4000);
+
+            if (highScore < points){
+                highScore = points;
+            }
+            points = 0;
         }
 
         window.addEventListener('keydown', function (e) {
@@ -831,6 +858,16 @@
             const halfSize = planeSize / 2 - 0.5; 
             targetPosition.x = Math.max(-halfSize, Math.min(halfSize, targetPosition.x));
             targetPosition.z = Math.max(-halfSize, Math.min(halfSize, targetPosition.z));
+
+            if (moveDirection.z < 0) {
+                points += 10; // Example: 10 points for moving forward
+                updatePointsDisplay();
+            }else if(moveDirection.z > 0){
+                points -= 10;
+                updatePointsDisplay();
+            }
+            
+    
 
             playSound('jump');
         }
@@ -914,6 +951,21 @@ function createGroundSections(positions, material) {
         ground.receiveShadow = true;
         scene.add(ground);
     });
+}
+function checkGoal() {
+    if (player.position.z <= -8) { // Reached the end (goal zone)
+        points += 100; // Award 100 points for reaching the goal
+        updatePointsDisplay();
+        resetPlayerPosition(); // Teleport back to starting position
+    }
+}
+function resetPlayerPosition() {
+    player.position.set(0, 0.1, 8); // Starting position
+    isMoving = false;
+    moveProgress = 0;
+    moveDirection.set(0, 0, 0);
+    startPosition.set(0, 0.1, 8);
+    targetPosition.set(0, 0.1, 8);
 }
 
 createGroundSections(grassPositions, grassMaterial);
