@@ -74,6 +74,7 @@
         const buses = [];
         const logs = [];
         const turtles = [];
+        const snakes = [];
 
         const loader = new GLTFLoader();
 
@@ -112,6 +113,10 @@
                 console.error('An error occured while loading the Fly model:', error)
             }
         )
+
+        let flySpawned = false;
+        let flySpawnTime = 0;
+        const flyDuration = 5;
 
         function loadCar() {
             loader.load(
@@ -233,6 +238,7 @@
                 buses.push(busClone);
             }
         }
+      
 
         function loadLog() {
             loader.load(
@@ -391,9 +397,9 @@
         }
 
         function initializeFly() {
-            fly.position.set();
-            fly.scale.set();
-
+            fly.scale.set(0.1,0.1,0.1);
+            fly.visible = false;
+            const flyDuration = 5;
             fly.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = false;
@@ -402,6 +408,7 @@
 
             });
 
+            scewwne.add(fly);
         }
 
 
@@ -455,6 +462,7 @@
 
             scene.add(bus);
         }
+
         loadBlueCar();
         loadCar();
         loadLog();
@@ -506,7 +514,7 @@
 
            
             checkCollisions();
-
+           
             if (player) {
                 player.userData.boundingBox.setFromObject(player);
                 if (isMoving) {
@@ -676,6 +684,23 @@
             } else {
                 player.position.y = 0.0;
             }
+
+            snakes.forEach((cube) => {
+                cube.userData.boundingBox.setFromObject(cube);
+                if (player.userData.boundingBox.intersectsBox(cube.userData.boundingBox)) {
+                    handleCollision();
+                }
+            });
+
+            if (fly.visible) {
+                const flyBox = new THREE.Box3().setFromObject(fly);
+                if (player.userData.boundingBox.intersectsBox(flyBox)) {
+                    fly.visible = false;
+                    flySpawned = false;
+                }
+            }
+
+          
         }
 
         function isPlayerOnPlatform(player, platform) {
@@ -865,6 +890,25 @@ light.castShadow = false;
 light.shadow.mapSize.width = 1024;
 light.shadow.mapSize.height = 1024;
 scene.add(light);
+
+        function initializeRedCubes() {
+            const cubeSpots = [-8, -6, -4, -2, 0, 2, 4, 6, 8];
+            cubeSpots.forEach((xPosition, index) => {
+                if (index % 2 === 0) {
+                    const geometry = new THREE.BoxGeometry(1, 1, 1);
+                    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+                    const cube = new THREE.Mesh(geometry, material);
+
+                    cube.position.set(xPosition, 0.5, -5); // Adjust y position to 0.5 to place on the ground
+                    cube.userData.boundingBox = new THREE.Box3().setFromObject(cube);
+
+                    scene.add(cube);
+                    snakes.push(cube); // Reusing the snakes array to store the cubes
+                }
+            });
+        }
+
+        initializeRedCubes();
 
         animate();
     </script>
