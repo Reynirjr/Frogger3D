@@ -24,6 +24,20 @@
     <script type="module">
         import * as THREE from 'three';
         import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+        import { TextureLoader, SphereGeometry, MeshBasicMaterial, Mesh, BackSide } from 'three';
+
+        const skyboxLoader = new THREE.CubeTextureLoader();
+
+        const skyboxTexture = skyboxLoader.load([
+            './imgs/posx.png', // Right face
+            './imgs/negx.png', // Left face
+            './imgs/posy.png', // Top face
+            './imgs/negy.png', // Bottom face
+            './imgs/posz.png', // Front face
+            './imgs/negz.png'  // Back face
+        ]);
+
+       
 
         
         const scene = new THREE.Scene();
@@ -60,6 +74,7 @@
         function updatePointsDisplay() {
             pointsDisplay.innerHTML = `Points: ${points} | High Score: ${highScore}`;
         }
+        scene.background = skyboxTexture;
 
         updatePointsDisplay();
 
@@ -470,7 +485,6 @@
 
         function initializeFly() {
             fly.scale.set(0.005, 0.005, 0.005); 
-            fly.userData.boundingBox = new THREE.Box3();
             fly.traverse(function (child) {
                 if (child.isMesh) {
                     child.castShadow = false;
@@ -481,9 +495,17 @@
                     });
                 }
             });
+            const collisionBox = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshBasicMaterial({ visible: false })
+    );
+            collisionBox.name = "collisionBox"; 
+            collisionBox.scale.set(200, 200, 200); 
+            fly.add(collisionBox);
+
             fly.visible = false;
             scene.add(fly);
-        }
+    }
 
 
         function initializeCar() {
@@ -733,12 +755,17 @@
             const flyZ = -5;
             fly.position.set(randomX, 0.5, flyZ);
             fly.visible = true;
+            const collisionBox = fly.getObjectByName("collisionBox");
+            if (collisionBox) {
+                collisionBox.visible = true;
+            }
         }
+      
 
         function updateFly(deltaTime, fly, player){
-           const hoverHeight = 0.2;
+           const hoverHeight = 0.1;
            const hoverSpeed = 2;
-           fly.position.y = 0.5 + Math.sin(clock.getElapsedTime() * hoverSpeed) * hoverHeight;
+           fly.position.y = 0.1 + Math.sin(clock.getElapsedTime() * hoverSpeed) * hoverHeight;
 
            fly.rotation.y += deltaTime;
         }
@@ -817,26 +844,27 @@
 
             if (fly.visible) {
                 fly.updateMatrixWorld(true);
-                fly.userData.boundingBox.setFromObject(fly);
+                const collisionBox = fly.getObjectByName("collisionBox");
+                if (collisionBox) {
+                    collisionBox.updateMatrixWorld(true);
+                    const flyBox = new THREE.Box3().setFromObject(collisionBox);
+                    if (player.userData.boundingBox.intersectsBox(flyBox)) {
+                        fly.visible = false;
+                        flySpawned = false;
 
-                if (player.userData.boundingBox.intersectsBox(fly.userData.boundingBox)) {
-                    fly.visible = false;
-                    flySpawned = false;
+                        points += 100;
+                        updatePointsDisplay();
 
-                    points += 100;
-                    updatePointsDisplay();
-
-                    if (soundManager.eat) {
-                        if (soundManager.eat.isPlaying) {
-                            soundManager.eat.stop();
+                        if (soundManager.eat) {
+                            if (soundManager.eat.isPlaying) {
+                                soundManager.eat.stop();
+                            }
+                            soundManager.eat.setVolume(2.0);
+                            soundManager.eat.play();
                         }
-                        soundManager.eat.setVolume(2.0);
-                        soundManager.eat.play();
                     }
                 }
             }
-
-          
         }
 
         function isPlayerOnPlatform(player, platform) {
@@ -953,6 +981,16 @@
                 if (keysPressed['ArrowRight']) {
                     cameraRotationY += rotationSpeed;
                     keysHandled['ArrowRight'] = true;
+                }
+                if (keysPressed['KeyP']) {
+                    if (soundManager.backgroundMusic) {
+                        if (soundManager.backgroundMusic.isPlaying) {
+                            soundManager.backgroundMusic.pause();
+                        } else {
+                            soundManager.backgroundMusic.play();
+                        }
+                    }
+                    keysHandled['KeyP'] = true;
                 }
 
                 const maxCameraRotationX = Math.PI / 2 - 0.5;
