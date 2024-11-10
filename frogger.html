@@ -7,6 +7,7 @@
         body { margin: 0; }
         canvas { display: block; }
     </style>
+        <link rel="icon" href="imgs/froggy.png" type="image/png">
 </head>
 <body>
     <script
@@ -991,6 +992,10 @@
                         }
                     }
                     keysHandled['KeyP'] = true;
+                }
+                if (keysPressed['KeyQ'] && !keysHandled['KeyQ']) {
+                    window.location.href = 'intro.html';
+                    keysHandled['KeyQ'] = true;
                 }
 
                 const maxCameraRotationX = Math.PI / 2 - 0.5;
